@@ -16,7 +16,14 @@
 - Worker Node 장애 상황에서 서비스 지속 및 MetalLB VIP 이동 검증
 - Kubernetes 구축/배포 과정에서 사용한 일부 Ansible 자동화 자료 검토 및 활용
 
-## 2. 아키텍처 흐름
+## 2. 전체 아키텍처
+
+> 아래 이미지는 팀 프로젝트의 전체 인프라 아키텍처입니다.  
+> 이 저장소에서는 전체 구성 중 제가 담당한 **MetalLB, NGINX Ingress Controller, Kubernetes 애플리케이션 배포 및 장애 검증 영역**을 중심으로 정리했습니다.
+
+![Ticket Rail Infrastructure Architecture](docs/images/architecture.png)
+
+### 담당 영역의 트래픽 흐름
 
 ```text
 Client
@@ -69,7 +76,7 @@ Worker Node 장애 상황을 발생시킨 뒤에도 외부 트래픽이 정상�
 ## 5. 저장소 구조
 
 ```text
-ticketing-infrastructure-portfolio/
+ticketing-infra/
 ├── kubernetes/
 │   ├── app/              # Deployment, Service, ConfigMap, HPA
 │   ├── ingress/          # Ingress 및 NGINX 설정
@@ -77,6 +84,8 @@ ticketing-infrastructure-portfolio/
 ├── ansible/
 │   └── team-reference/   # 팀 공용 Kubernetes 구축 자동화 참고 자료
 ├── docs/
+│   ├── images/
+│   │   └── architecture.png
 │   ├── contribution.md
 │   └── validation.md
 ├── .gitignore
@@ -92,7 +101,11 @@ ticketing-infrastructure-portfolio/
 
 ## 7. 프로젝트를 통해 확인한 점
 
-단순히 Kubernetes 리소스를 배포하는 것에서 끝내지 않고, 외부 사용자의 요청이 `MetalLB → NGINX Ingress → Service → Pod`로 전달되는 전체 경로를 이해하고 구성했습니다. 또한 실제 Pod와 Worker 장애를 발생시켜 정상 상태에서만 동작하는 구성이 아니라 장애 상황에서도 서비스 진입 경로가 유지되는지를 확인했습니다.
+단순히 Kubernetes 리소스를 배포하는 것에서 끝내지 않고, 외부 사용자의 요청이 `MetalLB → NGINX Ingress → Service → Pod`로 전달되는 전체 경로를 이해하고 구성했습니다.
+
+또한 실제 Ingress Controller Pod와 Worker Node에 장애 상황을 발생시켜 정상 상태에서의 동작 확인뿐만 아니라, 장애 상황에서도 외부 서비스 진입 경로가 유지되는지를 검증했습니다.
+
+이를 통해 개별 Kubernetes 리소스의 구성뿐만 아니라 **외부 트래픽 진입부터 애플리케이션 Pod까지 이어지는 인프라 전체 흐름과 고가용성 구성의 동작 방식**을 확인할 수 있었습니다.
 
 ## 8. 공개 범위
 
