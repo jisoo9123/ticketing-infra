@@ -1,0 +1,26 @@
+# Secrets / credentials
+.env
+.env.*
+*.key
+*.pem
+*kubeconfig*
+secret.yaml
+secrets.yaml
+
+# Logs / evidence / backups
+*.log
+*.tar.gz
+*.zip
+results/
+artifacts/
+backups/
+temporary/
+
+# Editor / OS
+*.swp
+.vscode/
+.DS_Store
+
+# Git / dependencies
+.git/
+node_modules/
