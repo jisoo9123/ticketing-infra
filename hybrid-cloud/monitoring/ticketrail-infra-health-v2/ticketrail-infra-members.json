@@ -1,0 +1,659 @@
+{
+  "id": null,
+  "uid": "ticketrail-infra-members",
+  "title": "TicketRail 데이터 구성원과 역할",
+  "schemaVersion": 39,
+  "version": 2,
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "tags": [
+    "ticketrail",
+    "infra",
+    "status-only"
+  ],
+  "description": "가동 상태 전용. 성능·SLO·Lag 제외. 확인 불가는 DOWN이나 정상으로 판정하지 않습니다. VM 전원은 미측정.",
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "PostgreSQL · Primary / Standby",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(((max(cnpg_pg_replication_in_recovery{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-1\"}) + 1) and on() ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-1\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-1\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-1\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-1\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-1\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-1\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "PG-1",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "(((max(cnpg_pg_replication_in_recovery{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-2\"}) + 1) and on() ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-2\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-2\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-2\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-2\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-2\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-2\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "PG-2",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "(((max(cnpg_pg_replication_in_recovery{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-3\"}) + 1) and on() ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-3\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-3\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-3\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(cnpg_collector_up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-3\"}) * min(up{namespace=\"data\",job=\"data/ticketing-postgresql\",pod=\"ticketing-postgresql-3\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-postgresql-3\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "PG-3",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Primary",
+                  "color": "green",
+                  "index": 1
+                },
+                "2": {
+                  "text": "Standby",
+                  "color": "green",
+                  "index": 2
+                },
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 3
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 28
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Redis · Primary / Replica",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(((max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\",role=\"master\"}) or (2 * max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\",role=\"slave\"}))) and on() ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-0\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-0\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-0\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "Redis-0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "(((max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\",role=\"master\"}) or (2 * max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\",role=\"slave\"}))) and on() ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-1\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-1\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-1\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "Redis-1",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "(((max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\",role=\"master\"}) or (2 * max(redis_instance_info{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\",role=\"slave\"}))) and on() ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-2\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 1)) or ((max(redis_up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\"}) * min(up{namespace=\"data\",job=\"monitoring/ticketing-redis\",pod=\"redis-2\"}) * (max(kube_pod_status_ready{namespace=\"data\",pod=\"redis-2\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1))) == 0)) or vector(-1)",
+          "legendFormat": "Redis-2",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Primary",
+                  "color": "green",
+                  "index": 1
+                },
+                "2": {
+                  "text": "Replica",
+                  "color": "green",
+                  "index": 2
+                },
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 3
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 28
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Kafka · Broker별 Ready",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-kafka-dual-role-0\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Broker-0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "(max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-kafka-dual-role-1\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Broker-1",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "(max(kube_pod_status_ready{namespace=\"data\",pod=\"ticketing-kafka-dual-role-2\",condition=\"true\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Broker-2",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NOT READY",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "READY",
+                  "color": "green",
+                  "index": 1
+                },
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 28
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Redis Sentinel · Container Ready",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(max(kube_pod_container_status_ready{namespace=\"data\",pod=\"redis-0\",container=\"sentinel\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Sentinel-0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "(max(kube_pod_container_status_ready{namespace=\"data\",pod=\"redis-1\",container=\"sentinel\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Sentinel-1",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "(max(kube_pod_container_status_ready{namespace=\"data\",pod=\"redis-2\",container=\"sentinel\"}) and on() (max(up{job=\"kube-state-metrics\"}) == 1)) or vector(-1)",
+          "legendFormat": "Sentinel-2",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NOT READY",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "READY",
+                  "color": "green",
+                  "index": 1
+                },
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 28
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Kafka · Active Controller 수",
+      "description": "JMX Controller 지표가 수집될 때만 확인됩니다. Pod Ready나 파티션 Leader로 추정하지 않습니다.",
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(kafka_controller_active_controller_count{namespace=\"data\"})) or vector(-1)",
+          "legendFormat": "Active Controller",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "없음",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "1개",
+                  "color": "green",
+                  "index": 1
+                },
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 46
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Kafka · 업무 파티션 Leader 수",
+      "description": "Kafka Leader는 파티션 단위입니다. 0개도 Broker DOWN을 의미하지 않습니다. 두 업무 토픽 기준.",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(count(max by(topic,partition) (kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}) == 0) or (0 * count(kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}))) or vector(-1)",
+          "legendFormat": "Broker-0",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "(count(max by(topic,partition) (kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}) == 1) or (0 * count(kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}))) or vector(-1)",
+          "legendFormat": "Broker-1",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "(count(max by(topic,partition) (kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}) == 2) or (0 * count(kafka_topic_partition_leader{namespace=\"data\",topic=~\"booking.created|payment.completed\"}))) or vector(-1)",
+          "legendFormat": "Broker-2",
+          "editorMode": "code",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "확인 불가",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "확인 불가",
+                  "color": "gray",
+                  "index": 0
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "gray",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 28
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "text",
+      "title": "역할 표기 범위",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "PostgreSQL: Primary / Standby · Redis: Primary / Replica\n\nKafka: Broker별 Ready + 파티션 Leader 분포. **Kafka Active Controller는 미수집이면 확인 불가**입니다. LB1/2의 Active/Standby(VIP 소유)는 아직 미수집이며 SSH 응답으로 추정하지 않습니다."
+      }
+    }
+  ],
+  "links": [
+    {
+      "type": "link",
+      "title": "가동 상태",
+      "url": "/d/ticketrail-infra-main?from=${__from}&to=${__to}",
+      "keepTime": false,
+      "includeVars": false,
+      "targetBlank": false,
+      "icon": "dashboard"
+    },
+    {
+      "type": "link",
+      "title": "데이터 구성원·역할",
+      "url": "/d/ticketrail-infra-members?from=${__from}&to=${__to}",
+      "keepTime": false,
+      "includeVars": false,
+      "targetBlank": false,
+      "icon": "dashboard"
+    }
+  ]
+}

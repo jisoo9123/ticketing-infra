@@ -1,0 +1,225 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ticketrail-slo-alerts
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: ticketrail
+    app.kubernetes.io/part-of: ticketrail-monitoring
+spec:
+  groups:
+    - name: ticketrail.slo.availability
+      rules:
+        - alert: TicketRailBackendUnavailable
+          expr: min(up{namespace="app",job="backend"}) == 0 or absent(up{namespace="app",job="backend"})
+          for: 2m
+          labels:
+            severity: critical
+            service: ticketrail-backend
+          annotations:
+            summary: TicketRail Backend unavailable
+            description: Backend Prometheus targets have been down or missing for 2 minutes.
+
+        - alert: TicketRailDeploymentNotReady
+          expr: |
+            kube_deployment_status_replicas_ready{
+              namespace="app",
+              deployment=~"backend|payment-consumer-v2|notification-consumer-v2"
+            }
+            < on(namespace, deployment)
+            kube_deployment_spec_replicas{
+              namespace="app",
+              deployment=~"backend|payment-consumer-v2|notification-consumer-v2"
+            }
+          for: 5m
+          labels:
+            severity: critical
+            service: ticketrail-workloads
+          annotations:
+            summary: TicketRail Deployment is not fully ready
+            description: '{{ $labels.deployment }} has fewer Ready replicas than desired for 5 minutes.'
+
+        - alert: TicketRailHttp5xxRatioHigh
+          expr: |
+            (
+              sum(rate(http_requests_total{
+                namespace="app",
+                job="backend",
+                route!~"/health/.*",
+                status_code=~"5.."
+              }[5m]))
+              /
+              clamp_min(sum(rate(http_requests_total{
+                namespace="app",
+                job="backend",
+                route!~"/health/.*"
+              }[5m])), 0.001)
+            ) > 0.01
+            and
+            sum(rate(http_requests_total{
+              namespace="app",
+              job="backend",
+              route!~"/health/.*"
+            }[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+            service: ticketrail-backend
+          annotations:
+            summary: TicketRail HTTP 5xx ratio is above 1%
+            description: Non-health HTTP requests have exceeded the 1% 5xx SLO for 5 minutes.
+
+        - alert: TicketRailHttpP95High
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (
+                rate(http_request_duration_seconds_bucket{
+                  namespace="app",
+                  job="backend",
+                  route!~"/health/.*"
+                }[5m])
+              )
+            ) > 0.5
+            and
+            sum(rate(http_requests_total{
+              namespace="app",
+              job="backend",
+              route!~"/health/.*"
+            }[5m])) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+            service: ticketrail-backend
+          annotations:
+            summary: TicketRail HTTP p95 latency is above 500ms
+            description: Non-health HTTP p95 latency has exceeded 500ms for 10 minutes.
+
+    - name: ticketrail.slo.async
+      rules:
+        - alert: TicketRailPaymentLagSustained
+          expr: |
+            kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-payment",
+              topic="booking.created"
+            } > 100
+          for: 5m
+          labels:
+            severity: warning
+            service: ticketrail-payment-consumer
+          annotations:
+            summary: Payment Consumer Lag is sustained above 100
+            description: Active Payment Consumer Lag has remained above 100 messages for 5 minutes.
+
+        - alert: TicketRailNotificationLagSustained
+          expr: |
+            kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-notification",
+              topic="payment.completed"
+            } > 100
+          for: 5m
+          labels:
+            severity: warning
+            service: ticketrail-notification-consumer
+          annotations:
+            summary: Notification Consumer Lag is sustained above 100
+            description: Active Notification Consumer Lag has remained above 100 messages for 5 minutes.
+
+        - alert: TicketRailPaymentLagGrowing
+          expr: |
+            kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-payment",
+              topic="booking.created"
+            } > 100
+            and
+            deriv(kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-payment",
+              topic="booking.created"
+            }[10m]) > 1
+          for: 10m
+          labels:
+            severity: critical
+            service: ticketrail-payment-consumer
+          annotations:
+            summary: Payment Consumer Lag continues to grow
+            description: Payment Lag is above 100 and has a positive 10-minute slope for 10 minutes.
+
+        - alert: TicketRailNotificationLagGrowing
+          expr: |
+            kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-notification",
+              topic="payment.completed"
+            } > 100
+            and
+            deriv(kafka_consumergroup_lag_sum{
+              consumergroup="ticketing-backend-consumer-v1-notification",
+              topic="payment.completed"
+            }[10m]) > 1
+          for: 10m
+          labels:
+            severity: critical
+            service: ticketrail-notification-consumer
+          annotations:
+            summary: Notification Consumer Lag continues to grow
+            description: Notification Lag is above 100 and has a positive 10-minute slope for 10 minutes.
+
+        - alert: TicketRailQueueRejectionsDetected
+          expr: increase(ticketing_queue_rejected_total[5m]) > 0
+          for: 0m
+          labels:
+            severity: warning
+            service: ticketrail-queue
+          annotations:
+            summary: Queue admission rejections detected
+            description: At least one queue admission rejection occurred during the last 5 minutes.
+
+        - alert: TicketRailConsumerAtMaximumReplicas
+          expr: |
+            kube_horizontalpodautoscaler_status_current_replicas{
+              namespace="app",
+              horizontalpodautoscaler=~"keda-hpa-payment-consumer-v2-kafka|keda-hpa-notification-consumer-v2-kafka"
+            }
+            >= on(namespace, horizontalpodautoscaler)
+            kube_horizontalpodautoscaler_spec_max_replicas{
+              namespace="app",
+              horizontalpodautoscaler=~"keda-hpa-payment-consumer-v2-kafka|keda-hpa-notification-consumer-v2-kafka"
+            }
+          for: 10m
+          labels:
+            severity: warning
+            service: ticketrail-keda
+          annotations:
+            summary: TicketRail Consumer has remained at maximum replicas
+            description: '{{ $labels.horizontalpodautoscaler }} has remained at its maximum replica count for 10 minutes.'
+
+    - name: ticketrail.slo.data
+      rules:
+        - alert: TicketRailPostgreSQLUnavailable
+          expr: min(cnpg_collector_up{cluster="ticketing-postgresql"}) < 1 or absent(cnpg_collector_up{cluster="ticketing-postgresql"})
+          for: 2m
+          labels:
+            severity: critical
+            service: ticketrail-postgresql
+          annotations:
+            summary: TicketRail PostgreSQL instance unavailable
+            description: At least one PostgreSQL instance is down or its metrics are missing for 2 minutes.
+
+        - alert: TicketRailRedisUnavailable
+          expr: min(redis_up{namespace="data"}) < 1 or absent(redis_up{namespace="data"})
+          for: 2m
+          labels:
+            severity: critical
+            service: ticketrail-redis
+          annotations:
+            summary: TicketRail Redis instance unavailable
+            description: At least one Redis instance is down or its metrics are missing for 2 minutes.
+
+        - alert: TicketRailKafkaExporterUnavailable
+          expr: min(up{namespace="data",job="monitoring/ticketing-kafka"}) < 1 or absent(up{namespace="data",job="monitoring/ticketing-kafka"})
+          for: 2m
+          labels:
+            severity: critical
+            service: ticketrail-kafka
+          annotations:
+            summary: TicketRail Kafka monitoring target unavailable
+            description: At least one Kafka monitoring target is down or missing for 2 minutes.

@@ -1,0 +1,224 @@
+apiVersion: v1
+data:
+  ticketrail-slo-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "decimals": 3,
+              "max": 100,
+              "min": 0,
+              "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 99}, {"color": "green", "value": 99.9}]},
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "avg(avg_over_time(up{namespace=\"app\",job=\"backend\"}[30d])) * 100", "instant": true, "legendFormat": "Availability", "range": false, "refId": "A"}],
+          "title": "Backend Availability (30d)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "decimals": 1,
+              "max": 100,
+              "min": 0,
+              "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 25}, {"color": "green", "value": 50}]},
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+          "id": 2,
+          "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "clamp_max(clamp_min((1 - ((1 - avg(avg_over_time(up{namespace=\"app\",job=\"backend\"}[30d]))) / 0.001)) * 100, 0), 100)", "instant": true, "legendFormat": "Budget", "range": false, "refId": "A"}],
+          "title": "99.9% Error Budget Remaining",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 2, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 1}]}, "unit": "percent"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+          "id": 3,
+          "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "(100 * sum(rate(http_requests_total{namespace=\"app\",job=\"backend\",route!~\"/health/.*\",status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{namespace=\"app\",job=\"backend\",route!~\"/health/.*\"}[5m])), 0.001)) or vector(0)", "instant": true, "legendFormat": "5xx", "range": false, "refId": "A"}],
+          "title": "HTTP 5xx Ratio (5m)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 300}, {"color": "red", "value": 500}]}, "unit": "ms"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+          "id": 4,
+          "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace=\"app\",job=\"backend\",route!~\"/health/.*\"}[5m]))) * 1000", "instant": true, "legendFormat": "p95", "range": false, "refId": "A"}],
+          "title": "HTTP Latency p95 (5m)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "requests/sec", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 12, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false}, "unit": "reqps"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+          "id": 5,
+          "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [{"editorMode": "code", "expr": "sum by (route) (rate(http_requests_total{namespace=\"app\",job=\"backend\",route!~\"/health/.*\"}[1m]))", "legendFormat": "{{route}}", "range": true, "refId": "A"}],
+          "title": "Application Request Rate by Route",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "events/sec", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 12, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false}, "unit": "ops"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+          "id": 6,
+          "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "sum(rate(ticketing_booking_total[5m])) or vector(0)", "legendFormat": "Bookings", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "sum(rate(ticketing_queue_join_total[5m])) or vector(0)", "legendFormat": "Queue joins", "range": true, "refId": "B"},
+            {"editorMode": "code", "expr": "sum(rate(ticketing_queue_admitted_total[5m])) or vector(0)", "legendFormat": "Admitted", "range": true, "refId": "C"},
+            {"editorMode": "code", "expr": "sum(rate(ticketing_queue_rejected_total[5m])) or vector(0)", "legendFormat": "Rejected", "range": true, "refId": "D"}
+          ],
+          "title": "Booking and Queue Event Rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "messages", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 18, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 4, "showPoints": "auto", "spanNulls": false}, "min": 0, "unit": "short"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+          "id": 7,
+          "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "kafka_consumergroup_lag_sum{consumergroup=\"ticketing-backend-consumer-v1-payment\",topic=\"booking.created\"}", "legendFormat": "Payment", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "kafka_consumergroup_lag_sum{consumergroup=\"ticketing-backend-consumer-v1-notification\",topic=\"payment.completed\"}", "legendFormat": "Notification", "range": true, "refId": "B"}
+          ],
+          "title": "Active Kafka Consumer Lag",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "pods", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 12, "lineInterpolation": "stepAfter", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false}, "decimals": 0, "min": 0, "unit": "short"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+          "id": 8,
+          "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"app\",horizontalpodautoscaler=\"keda-hpa-payment-consumer-v2-kafka\"}", "legendFormat": "Payment current", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"app\",horizontalpodautoscaler=\"keda-hpa-payment-consumer-v2-kafka\"}", "legendFormat": "Payment desired", "range": true, "refId": "B"},
+            {"editorMode": "code", "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"app\",horizontalpodautoscaler=\"keda-hpa-notification-consumer-v2-kafka\"}", "legendFormat": "Notification current", "range": true, "refId": "C"},
+            {"editorMode": "code", "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"app\",horizontalpodautoscaler=\"keda-hpa-notification-consumer-v2-kafka\"}", "legendFormat": "Notification desired", "range": true, "refId": "D"}
+          ],
+          "title": "KEDA Consumer Replicas",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "mappings": [{"options": {"0": {"color": "red", "index": 0, "text": "DOWN"}, "1": {"color": "green", "index": 1, "text": "READY"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "none"}, "overrides": []},
+          "gridPos": {"h": 7, "w": 12, "x": 0, "y": 22},
+          "id": 9,
+          "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [
+            {"editorMode": "code", "expr": "kube_deployment_status_replicas_ready{namespace=\"app\",deployment=\"backend\"} == bool kube_deployment_spec_replicas{namespace=\"app\",deployment=\"backend\"}", "instant": true, "legendFormat": "Backend", "range": false, "refId": "A"},
+            {"editorMode": "code", "expr": "kube_deployment_status_replicas_ready{namespace=\"app\",deployment=\"payment-consumer-v2\"} == bool kube_deployment_spec_replicas{namespace=\"app\",deployment=\"payment-consumer-v2\"}", "instant": true, "legendFormat": "Payment", "range": false, "refId": "B"},
+            {"editorMode": "code", "expr": "kube_deployment_status_replicas_ready{namespace=\"app\",deployment=\"notification-consumer-v2\"} == bool kube_deployment_spec_replicas{namespace=\"app\",deployment=\"notification-consumer-v2\"}", "instant": true, "legendFormat": "Notification", "range": false, "refId": "C"}
+          ],
+          "title": "Deployment Readiness",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "mappings": [{"options": {"0": {"color": "red", "index": 0, "text": "DOWN"}, "1": {"color": "green", "index": 1, "text": "UP"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "none"}, "overrides": []},
+          "gridPos": {"h": 7, "w": 12, "x": 12, "y": 22},
+          "id": 10,
+          "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [
+            {"editorMode": "code", "expr": "min(cnpg_collector_up{cluster=\"ticketing-postgresql\"})", "instant": true, "legendFormat": "PostgreSQL", "range": false, "refId": "A"},
+            {"editorMode": "code", "expr": "min(redis_up{namespace=\"data\"})", "instant": true, "legendFormat": "Redis", "range": false, "refId": "B"},
+            {"editorMode": "code", "expr": "min(up{namespace=\"data\",job=\"monitoring/ticketing-kafka\"})", "instant": true, "legendFormat": "Kafka", "range": false, "refId": "C"}
+          ],
+          "title": "Data Service Health",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 200}, {"color": "red", "value": 500}]}, "unit": "ms"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 29},
+          "id": 11,
+          "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(ticketing_queue_wait_seconds_bucket[5m]))) * 1000", "instant": true, "legendFormat": "Queue p95", "range": false, "refId": "A"}],
+          "title": "Queue Wait p95",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 100}, {"color": "red", "value": 1000}]}, "unit": "short"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 29},
+          "id": 12,
+          "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "sum(ticketing_queue_admitted_current) or vector(0)", "instant": true, "legendFormat": "Admitted", "range": false, "refId": "A"}],
+          "title": "Current Queue Admissions",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 100}, {"color": "red", "value": 200}]}, "unit": "short"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 29},
+          "id": 13,
+          "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "sum(cnpg_backends_total{cluster=\"ticketing-postgresql\"})", "instant": true, "legendFormat": "Connections", "range": false, "refId": "A"}],
+          "title": "PostgreSQL Backends",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 1, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1073741824}, {"color": "red", "value": 2147483648}]}, "unit": "bytes"}, "overrides": []},
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 29},
+          "id": 14,
+          "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "sum(redis_memory_used_bytes{namespace=\"data\"})", "instant": true, "legendFormat": "Used", "range": false, "refId": "A"}],
+          "title": "Redis Memory Used",
+          "type": "stat"
+        }
+      ],
+      "refresh": "15s",
+      "schemaVersion": 39,
+      "tags": ["ticketrail", "slo", "hybrid", "keda"],
+      "templating": {"list": []},
+      "time": {"from": "now-1h", "to": "now"},
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "TicketRail SLO / Hybrid Capacity",
+      "uid": "ticketrail-slo-hybrid",
+      "version": 1,
+      "weekStart": ""
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    grafana_dashboard: "1"
+  name: ticketrail-slo-dashboard
+  namespace: monitoring
