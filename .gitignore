@@ -24,3 +24,4 @@ temporary/
 # Git / dependencies
 .git/
 node_modules/
+/README.backup.md
