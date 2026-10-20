@@ -85,7 +85,18 @@ Backend Pods
 
 ## 4. 2차 아키텍처 — Hybrid Cloud
 
-> **아키텍처 이미지 추가 예정:** 2차 아키텍처 다이어그램은 아직 확정되지 않아 현재 README에는 넣지 않았습니다. 확정 후 이 섹션에 이미지를 추가할 예정입니다.
+### 물리 아키텍처
+
+![Ticket Rail Hybrid Cloud 물리 아키텍처](docs/images/hybrid-physical.png)
+
+### 논리 아키텍처
+
+<details>
+<summary>Hybrid Cloud 논리 아키텍처 펼쳐보기</summary>
+
+![Ticket Rail Hybrid Cloud 논리 아키텍처](docs/images/hybrid-logical.png)
+
+</details>
 
 ### 구성 목적
 
@@ -135,7 +146,18 @@ AWS VPC: 10.20.0.0/16
 
 ## 5. 2차 아키텍처 — Full AWS
 
-> **아키텍처 이미지 추가 예정:** Full AWS 아키텍처 다이어그램도 최종본이 확정되면 이 섹션에 추가할 예정입니다.
+### 물리 아키텍처
+
+![Ticket Rail Full AWS 물리 아키텍처](docs/images/full-aws-physical.png)
+
+### 논리 아키텍처
+
+<details>
+<summary>Full AWS 논리 아키텍처 펼쳐보기</summary>
+
+![Ticket Rail Full AWS 논리 아키텍처](docs/images/full-aws-logical.png)
+
+</details>
 
 Hybrid Cloud 단계에서는 주요 데이터 서비스가 온프레미스에 있었습니다. Full AWS 단계에서는 ROSA HCP를 활용하면서 데이터 계층을 AWS 관리형 서비스로 구성해 서비스 연동과 성능을 검증했습니다.
 
